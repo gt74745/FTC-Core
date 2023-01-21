@@ -80,13 +80,13 @@ public class Pipeline {
                     if (step.path.profile != null)
                     {
                         step.path.profile.calculateProfile(localization.currentPosition, dest);
-                        time.reset();
                     }
 
-                    while (!navigationEngine.isTargetReached(dest) && !manager.opMode.isStopRequested()) {
+                    while (!navigationEngine.isTargetReached(dest) && !manager.opMode.isStopRequested() && (time.time() < dest.maxTime || dest.maxTime == 0)) {
                         navigationEngine.navigateInALinearFashion(dest, step.path.profile);
                         runContinuousActions();
                     }
+                    time.reset();
                 }
             } else if (step.type == PipelineStep.StepType.ACTION)
             {
