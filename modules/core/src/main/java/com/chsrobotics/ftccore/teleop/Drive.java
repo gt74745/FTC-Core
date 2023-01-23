@@ -13,7 +13,6 @@ public class Drive {
     private long prevTime = System.currentTimeMillis();
     private final UserDriveLoop loop;
     private final Builder.ScaleMode mode;
-    public static boolean useSpeedModifier = false;
 
     public Drive (HardwareManager manager, UserDriveLoop loop, Builder.ScaleMode mode)
     {
@@ -72,32 +71,6 @@ public class Drive {
             negative_power = (joystick_power * Math.sin(orientation));
             positive_power = (orientation != 0) ? (joystick_power * Math.cos(orientation)) :
                     negative_power;
-
-            if (useSpeedModifier && (Math.abs(negative_power) > 0.1 || Math.abs(positive_power) > 0.1)) {
-                if (positive_power != 0 && negative_power != 0) {
-                    if (Math.abs(negative_power) > Math.abs(positive_power)) {
-                        positive_power = Math.abs((positive_power / negative_power)) * (positive_power / Math.abs(positive_power));
-                        negative_power = negative_power / Math.abs(negative_power);
-//                    positive_power = Math.abs(negative_power != 0 ? (positive_power / negative_power) * positive_power / Math.abs(positive_power): 0);
-//                    if (negative_power != 0) {
-//                        negative_power = negative_power / Math.abs(negative_power);
-//                    }
-                    } else {
-                        negative_power = Math.abs((negative_power / positive_power) * (positive_power / Math.abs(positive_power)));
-//                    positive_power = Math.abs((positive_power / negative_power)) * (positive_power / Math.abs(positive_power));
-                        positive_power = positive_power / Math.abs(positive_power);
-//                    negative_power = Math.abs(positive_power != 0 ? (positive_power / negative_power) * positive_power / Math.abs(positive_power) : 0);
-//                    if (positive_power != 0) {
-//                        positive_power = positive_power / Math.abs(positive_power);
-//                    }
-                    }
-                } else if (positive_power == 0) {
-                    negative_power = negative_power / Math.abs(negative_power);
-                } else {
-                    positive_power = positive_power / Math.abs(positive_power);
-                }
-
-            }
 
             move(positive_power, negative_power, rot_power);
         }
