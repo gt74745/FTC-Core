@@ -48,14 +48,14 @@ public class LocalizationEngine {
         //Kalman filter
         List<Position> positions = new ArrayList<>();
 
-        for (Localizer localizer : localizers) {
-            positions.add(localizer.getRobotPosition(lastPosition));
-        }
+//        for (Localizer localizer : localizers) {
+//            positions.add(localizer.getRobotPosition(lastPosition));
+//        }
 
-        localizers.get(0).updateRobotPosition(positions.get(0));
+//        localizers.get(0).updateRobotPosition(positions.get(0));
 
         lastPosition = currentPosition;
-        currentPosition = positions.get(0);
+        currentPosition = localizers.get(0).getRobotPosition(lastPosition);//positions.get(0);
         return currentPosition; //Temporarily returning only encoder based position.
     }
 
@@ -68,15 +68,15 @@ public class LocalizationEngine {
         }
 
         if (manager.driveMotors.length == 4) {
-            localizers.add(new EncoderLocalizer(null, manager));
+//            localizers.add(new EncoderLocalizer(null, manager));
         }
 
         if (manager.isImuLocalEnabled()) {
-            localizers.add(new IMULocalizer(null, manager));
+//            localizers.add(new IMULocalizer(null, manager));
         }
 
         if (manager.accessoryCameras.length > 0) {
-            localizers.add(new VisionLocalizer(null, manager));
+//            localizers.add(new VisionLocalizer(null, manager));
         }
     }
 }

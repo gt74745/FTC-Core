@@ -1,5 +1,8 @@
 package com.chsrobotics.ftccore.engine.navigation;
 
+import android.os.Environment;
+
+import com.chsrobotics.ftccore.Log;
 import com.chsrobotics.ftccore.engine.localization.LocalizationEngine;
 import com.chsrobotics.ftccore.engine.navigation.path.MotionProfile;
 import com.chsrobotics.ftccore.geometry.Position;
@@ -114,6 +117,9 @@ public class NavigationEngine {
             hardware.opMode.telemetry.addData("T", position.t);
             hardware.opMode.telemetry.addData("error", error);
 			hardware.opMode.telemetry.addData("direction", orientation);
+            hardware.opMode.telemetry.addData("thetaError", thetaError);
+            String directoryPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+            hardware.opMode.telemetry.addData("dir", directoryPath);
             hardware.opMode.telemetry.update();
         }
 
