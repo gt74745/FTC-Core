@@ -1,5 +1,8 @@
 package com.chsrobotics.ftccore.engine.navigation;
 
+import android.os.Environment;
+
+import com.chsrobotics.ftccore.Log;
 import com.chsrobotics.ftccore.engine.localization.LocalizationEngine;
 import com.chsrobotics.ftccore.engine.navigation.path.MotionProfile;
 import com.chsrobotics.ftccore.geometry.Position;
@@ -110,7 +113,6 @@ public class NavigationEngine {
         if (hardware.debugMode) {
             hardware.opMode.telemetry.addData("error", error);
 			hardware.opMode.telemetry.addData("direction", orientation);
-            hardware.opMode.telemetry.addData("magnitude", magnitude);
             hardware.opMode.telemetry.update();
         }
 

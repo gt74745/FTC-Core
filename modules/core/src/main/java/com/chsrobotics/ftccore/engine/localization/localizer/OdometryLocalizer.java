@@ -1,5 +1,6 @@
 package com.chsrobotics.ftccore.engine.localization.localizer;
 
+import com.chsrobotics.ftccore.Log;
 import com.chsrobotics.ftccore.geometry.Position;
 import com.chsrobotics.ftccore.hardware.HardwareManager;
 import com.chsrobotics.ftccore.management.constants.MiscConstants;
@@ -22,6 +23,8 @@ public class OdometryLocalizer extends Localizer{
     private double lastHeading = 0;
 
     private final double mmPerTick;
+    private Log log = new Log("log.csv", false);
+
 
     public OdometryLocalizer(Position initialState, HardwareManager hardware) {
         super(initialState, hardware);
@@ -96,7 +99,11 @@ public class OdometryLocalizer extends Localizer{
         hardware.opMode.telemetry.addData("lon", lon);
         hardware.opMode.telemetry.addData("heading", heading);
 
-        if (robotPosition.x == 0) robotPosition.x = 0.0000001;
+        if (robotPosition.x == 0) {
+            robotPosition.x = 0.0000001;
+        }
+        log.addData(robotPosition.x + "," + robotPosition.y + "," + robotPosition.t + "," + hardware.accessoryOdometryPods[0].getCurrentPosition() + "," + hardware.accessoryOdometryPods[1].getCurrentPosition() + "," + d + "," + r + "," + dx + "," + dy + "," + previousPosition.x + "," + previousPosition.y + "," + previousPosition.t);
+        log.update();
 
         return robotPosition;
     }
