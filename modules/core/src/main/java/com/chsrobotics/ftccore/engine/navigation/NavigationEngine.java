@@ -70,7 +70,6 @@ public class NavigationEngine {
 
     public void navigateInALinearFashion(Position destination, MotionProfile profile)
     {
-
         if (profile != null)
         {
             Position pos = localization.currentPosition;
@@ -109,11 +108,9 @@ public class NavigationEngine {
         lastError = error;
 
         if (hardware.debugMode) {
-            hardware.opMode.telemetry.addData("X", position.x);
-            hardware.opMode.telemetry.addData("Y", position.y);
-            hardware.opMode.telemetry.addData("T", position.t);
             hardware.opMode.telemetry.addData("error", error);
 			hardware.opMode.telemetry.addData("direction", orientation);
+            hardware.opMode.telemetry.addData("magnitude", magnitude);
             hardware.opMode.telemetry.update();
         }
 

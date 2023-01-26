@@ -92,8 +92,9 @@ public class OdometryLocalizer extends Localizer{
         robotPosition.y = previousPosition.y + dy;
         robotPosition.t = heading;
 
+        hardware.opMode.telemetry.addData("lat", lat);
+        hardware.opMode.telemetry.addData("lon", lon);
         hardware.opMode.telemetry.addData("heading", heading);
-        hardware.opMode.telemetry.addData("d_heading", r);
 
         if (robotPosition.x == 0) robotPosition.x = 0.0000001;
 
