@@ -5,6 +5,8 @@ import com.chsrobotics.ftccore.actions.ContinuousAction;
 import com.chsrobotics.ftccore.actions.SetPrecisionAction;
 import com.chsrobotics.ftccore.engine.localization.LocalizationEngine;
 import com.chsrobotics.ftccore.engine.navigation.NavigationEngine;
+import com.chsrobotics.ftccore.engine.navigation.control.ParametricSpline;
+import com.chsrobotics.ftccore.engine.navigation.control.SplineHelper;
 import com.chsrobotics.ftccore.engine.navigation.path.MotionProfile;
 import com.chsrobotics.ftccore.engine.navigation.path.Path;
 import com.chsrobotics.ftccore.engine.navigation.path.PrecisionMode;
@@ -25,6 +27,8 @@ public class Pipeline {
 
     public static ElapsedTime time = new ElapsedTime();
     private static Pipeline INSTANCE;
+    public static double t = 0;
+    public static double distTraveled = 0;
 
 
     public static Pipeline getInstance() {
@@ -37,6 +41,8 @@ public class Pipeline {
         this.steps = steps;
         this.continuousActions = continuousActions;
         this.localization = new LocalizationEngine(manager);
+        t = 0;
+        distTraveled = 0;
 
         time.startTime();
     }
@@ -61,7 +67,32 @@ public class Pipeline {
             {
                 assert step.path != null;
                 if (step.path.isCurved) {
-                    navigationEngine.navigateInANonLinearFashion(step.path.positions);
+
+                    double[] x = new double[step.path.positions.size()];
+                    double[] y = new double[step.path.positions.size()];
+
+                    for (int i = 0; i < step.path.positions.size(); i++) {
+                        x[i] = step.path.positions.get(i).x;
+                        y[i] = step.path.positions.get(i).y;
+                    }
+
+                    SplineHelper splineHelper = new SplineHelper();
+
+                    ParametricSpline spline = splineHelper.computeSpline(x, y);
+                    for (int i = 0; i < step.path.positions.size(); i++) {
+                        Position dest = step.path.positions.get(i);
+                        if (manager.opMode.isStopRequested())
+                        {
+                            break;
+                        }
+                        while ((!navigationEngine.isTargetReached(dest) || i != step.path.positions.size() - 1) && !manager.opMode.isStopRequested() && t < 1) {
+                            navigationEngine.navigateInANonLinearFashion(dest, spline);
+                            runContinuousActions();
+                        }
+                        navigationEngine.linearController.resetSum();
+                        navigationEngine.rotationController.resetSum();
+                    }
+                    t = 0;
                     continue;
                 }
                 for (Position dest : step.path.positions) {
