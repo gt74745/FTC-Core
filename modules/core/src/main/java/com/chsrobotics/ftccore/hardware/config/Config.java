@@ -31,6 +31,7 @@ public class Config {
     public double wheelDiameter;
     public double latWheelOffset;
     public double lonWheelOffset;
+    public double rotationMovementCoefficient;
     public boolean useDegrees = false;
 
     public Tolerances lowPrecisionTolerances;
@@ -54,6 +55,7 @@ public class Config {
         private double wheelDiameter;
         private double latWheelOffset;
         private double lonWheelOffset;
+        private double rotationMovementCoefficient = 0;
 
         private boolean debugMode;
         private boolean useDegrees = false;
@@ -246,6 +248,11 @@ public class Config {
             return this;
         }
 
+        public Builder setRotationMovementCoefficient(double c) {
+            rotationMovementCoefficient = c;
+            return this;
+        }
+
         /**
          Derives a robot configuration from the configuration builder.
          */
@@ -275,6 +282,7 @@ public class Config {
             config.mediumPrecisionTolerances = mediumPrecisionTolerances;
             config.highPrecisionTolerances = highPrecisionTolerances;
             config.profileCoeffs = profileCoeffs;
+            config.rotationMovementCoefficient = rotationMovementCoefficient;
 
             return config;
         }

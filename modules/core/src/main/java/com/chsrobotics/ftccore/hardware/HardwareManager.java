@@ -80,6 +80,7 @@ public class HardwareManager {
     private Tolerances mediumPrecisionTolerances;
     private Tolerances highPrecisionTolerances;
     public Tolerances tolerances; // Current tolerances
+    public double rotationMovementCoefficient;
 
     public boolean useDegrees;
 
@@ -121,6 +122,7 @@ public class HardwareManager {
         tolerances = mediumPrecisionTolerances;
 
         useDegrees = config.useDegrees;
+        rotationMovementCoefficient = config.rotationMovementCoefficient;
     }
 
     private void initializeDriveMotors(Config config)

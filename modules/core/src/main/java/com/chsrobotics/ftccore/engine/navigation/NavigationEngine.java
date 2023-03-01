@@ -91,7 +91,7 @@ public class NavigationEngine {
 
         double thetaOutput = Math.abs(thetaError) >= hardware.tolerances.rotational ? rotationController.getOutput(Math.abs(thetaError), 0) : 0;
         double orientation = Math.atan2(destination.y - position.y, destination.x - position.x) - Math.PI / 4 - position.t;
-        orientation += (isCounterClockwise ? -thetaOutput : thetaOutput) / 5000;
+        orientation += (isCounterClockwise ? -thetaOutput : thetaOutput) * hardware.rotationMovementCoefficient;
 
         time = System.currentTimeMillis();
 
@@ -158,7 +158,7 @@ public class NavigationEngine {
             magnitude = 1000;
         }
 
-        magnitude = Math.max(magnitude, 300);
+        magnitude = Math.max(magnitude, 500);
 
         if (spline.xSpline.derivative().value(Pipeline.t) > 0)
             orientation = Math.atan(spline.getDerivative(Pipeline.t)) - (Math.PI / 4);
