@@ -16,6 +16,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Pipeline {
 
@@ -79,6 +80,10 @@ public class Pipeline {
                     SplineHelper splineHelper = new SplineHelper();
 
                     ParametricSpline spline = splineHelper.computeSpline(x, y);
+                    if (step.path.profile != null) {
+                        step.path.profile.reset();
+                    }
+                    manager.setPrecisionMode(PrecisionMode.LOW);
                     for (int i = 0; i < step.path.positions.size(); i++) {
                         Position dest = step.path.positions.get(i);
                         if (manager.opMode.isStopRequested())
@@ -86,13 +91,23 @@ public class Pipeline {
                             break;
                         }
                         while ((!navigationEngine.isTargetReached(dest) || i != step.path.positions.size() - 1) && !manager.opMode.isStopRequested() && t < 1) {
-                            navigationEngine.navigateInANonLinearFashion(dest, spline);
+                            if (step.path.actions != null && step.path.actionTimes != null && !step.path.actions.isEmpty() && !step.path.actionTimes.isEmpty() && step.path.actionTimes.get(0) <= t) {
+                                step.path.actions.get(0).execute();
+                                step.path.actions.remove(0);
+                                step.path.actionTimes.remove(0);
+                            }
+                            navigationEngine.navigateInANonLinearFashion(spline, step.path.profile, step.path.distanceCoefficient);
                             runContinuousActions();
                         }
                         navigationEngine.linearController.resetSum();
                         navigationEngine.rotationController.resetSum();
                     }
                     t = 0;
+                    time.reset();
+                    if (step.path.profile != null) {
+                        step.path.profile.reset();
+                    }
+                    manager.setPrecisionMode(PrecisionMode.MEDIUM);
                     continue;
                 }
                 for (Position dest : step.path.positions) {
@@ -118,6 +133,9 @@ public class Pipeline {
                         runContinuousActions();
                     }
                     time.reset();
+                    if (step.path.profile != null) {
+                        step.path.profile.reset();
+                    }
                 }
             } else if (step.type == PipelineStep.StepType.ACTION)
             {
@@ -145,6 +163,21 @@ public class Pipeline {
 
         public Builder addAction(Action action) {
             steps.add(new PipelineStep(action));
+            return this;
+        }
+
+        public Builder addCurvedPath(MotionProfile profile, Position... positions) {
+            steps.add(new PipelineStep(Path.curved(profile, positions)));
+            return this;
+        }
+
+        public Builder addCurvedPath(MotionProfile profile, List<Action> actions, List<Double> actionTimes, Position... positions) {
+            steps.add(new PipelineStep(Path.curved(profile, actions, actionTimes, positions)));
+            return this;
+        }
+
+        public Builder addCurvedPath(MotionProfile profile, double distanceCoefficient, Position... positions) {
+            steps.add(new PipelineStep(Path.curved(profile, distanceCoefficient, positions)));
             return this;
         }
 

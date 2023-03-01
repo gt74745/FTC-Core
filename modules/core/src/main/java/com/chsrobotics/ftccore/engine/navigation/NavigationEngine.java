@@ -89,7 +89,9 @@ public class NavigationEngine {
 
         position = localization.getCurrentPosition();
 
+        double thetaOutput = Math.abs(thetaError) >= hardware.tolerances.rotational ? rotationController.getOutput(Math.abs(thetaError), 0) : 0;
         double orientation = Math.atan2(destination.y - position.y, destination.x - position.x) - Math.PI / 4 - position.t;
+        orientation += (isCounterClockwise ? -thetaOutput : thetaOutput) / 5000;
 
         time = System.currentTimeMillis();
 
@@ -105,7 +107,6 @@ public class NavigationEngine {
             posOutput = negOutput;
         }
 
-        double thetaOutput = Math.abs(thetaError) >= hardware.tolerances.rotational ? rotationController.getOutput(Math.abs(thetaError), 0) : 0;
 
         lastTime = time;
         lastError = error;
@@ -122,9 +123,8 @@ public class NavigationEngine {
         hardware.getRightBackMotor().setVelocity((posOutput) + ((isCounterClockwise ? 1 : -1) * thetaOutput));
     }
 
-    public void navigateInANonLinearFashion(Position dest, ParametricSpline spline)
+    public void navigateInANonLinearFashion(ParametricSpline spline, MotionProfile profile, double distanceCoefficient)
     {
-
 
         position = localization.getCurrentPosition();
         if (lastPosition.x == 0 && lastPosition.y == 0 && lastPosition.t == 0) {
@@ -141,22 +141,36 @@ public class NavigationEngine {
 
         Pipeline.distTraveled += Math.sqrt(Math.pow(position.x - lastPosition.x, 2) + Math.pow(position.y - lastPosition.y, 2));
 
-        Pipeline.t = Pipeline.distTraveled / spline.splineDistance;
+        Pipeline.t = distanceCoefficient * Pipeline.distTraveled / spline.splineDistance;
 
         if (Pipeline.t > 1) {
             return;
         }
 
+        if (profile != null)
+        {
+            if (Pipeline.t < 0.5) {
+                magnitude = profile.getSplineOutput(Pipeline.time.time(TimeUnit.MILLISECONDS) / 1000d, Pipeline.t);
+            } else {
+                magnitude = Math.min(linearController.getOutput(spline.splineDistance * (1 - Pipeline.t), 0), profile.maxVelocity);
+            }
+        } else {
+            magnitude = 1000;
+        }
+
+        magnitude = Math.max(magnitude, 300);
+
         if (spline.xSpline.derivative().value(Pipeline.t) > 0)
             orientation = Math.atan(spline.getDerivative(Pipeline.t)) - (Math.PI / 4);
         else
             orientation = Math.atan(spline.getDerivative(Pipeline.t))  + Math.PI- Math.PI / 4;
-        negOutput = 1500 * Math.sin(orientation);
+
+        negOutput = magnitude * Math.sin(orientation);
 
         if (orientation == 0) {
             posOutput = negOutput;
         } else {
-            posOutput = 1500 * Math.cos(orientation);
+            posOutput = magnitude * Math.cos(orientation);
         }
 
         double thetaOutput = rotationController.getOutput(Math.abs(thetaError), 0);

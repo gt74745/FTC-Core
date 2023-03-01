@@ -3,6 +3,7 @@ package com.chsrobotics.ftccore.engine.navigation.path;
 import com.chsrobotics.ftccore.geometry.Position;
 
 public class TrapezoidalMotionProfile extends MotionProfile {
+    private double splineAccelTime = 0;
     public TrapezoidalMotionProfile(double accel, double velocity) {
         super(accel, velocity);
     }
@@ -52,5 +53,15 @@ public class TrapezoidalMotionProfile extends MotionProfile {
             return accelerationDistance + cruiseDistance + maxVelocity * deaccelTime - 0.5 * maxAccel * (deaccelTime * deaccelTime);
         }
 
+    }
+    @Override
+    public double getSplineOutput(double time, double t) {
+        splineAccelTime = time;
+        return Math.min(maxAccel * time, maxVelocity);
+    }
+
+    @Override
+    public void reset() {
+        splineAccelTime = 0;
     }
 }

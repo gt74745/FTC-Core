@@ -1,18 +1,24 @@
 package com.chsrobotics.ftccore.teleop;
 
+import com.chsrobotics.ftccore.engine.navigation.control.PID;
 import com.chsrobotics.ftccore.hardware.HardwareManager;
+import com.chsrobotics.ftccore.pipeline.Pipeline;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
+import java.util.concurrent.TimeUnit;
+
 public class Drive {
     public final HardwareManager manager;
     private long prevTime = System.currentTimeMillis();
     private final UserDriveLoop loop;
     private final Builder.ScaleMode mode;
+    private final PID rotationController = new PID(new PIDCoefficients(0.2, 0, 0));
 
     public Drive (HardwareManager manager, UserDriveLoop loop, Builder.ScaleMode mode)
     {
@@ -23,6 +29,9 @@ public class Drive {
 
     private void driveLoop()
     {
+        boolean isRotationControllerActive = true;
+        double lastTheta = 0;
+        long rotationControllerTimeoutStart = 0;
         while (!manager.opMode.isStopRequested())
         {
             loop.loop();
@@ -46,6 +55,48 @@ public class Drive {
 
             rot_power = (manager.thetaReversed ? -1 : 1) * gamepad1.right_stick_x;
 
+            gyro_angles = manager.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS);
+            theta = gyro_angles.firstAngle - manager.IMUReset - manager.offset;
+
+            theta *= manager.thetaReversed ? -1 : 1;
+
+            // todo: override for rotation pid
+            // todo: dpad for arm heights
+            isRotationControllerActive = System.currentTimeMillis() - rotationControllerTimeoutStart > 250;
+            if (rot_power == 0 && isRotationControllerActive) {
+                lastTheta = manager.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS).firstAngle - manager.offset;
+                if (lastTheta > 2 * Math.PI) {
+                    lastTheta -= 2 * Math.PI;
+                } else if (lastTheta < 0) {
+                    lastTheta += 2 * Math.PI;
+                }
+                double thetaError = lastTheta - theta;
+
+                boolean isCounterClockwise = false;
+
+                if (Math.abs(lastTheta - (theta - (2 * Math.PI))) < Math.abs(thetaError))
+                {
+                    thetaError = lastTheta - (theta - (2 * Math.PI));
+                    isCounterClockwise = true;
+                }
+
+                if (Math.abs(lastTheta - (theta + (2 * Math.PI))) < thetaError)
+                {
+                    thetaError = lastTheta - (theta + (2 * Math.PI));
+                    isCounterClockwise = true;
+                }
+
+                if (thetaError > 0 && (thetaError < Math.PI))
+                    isCounterClockwise = true;
+
+                if (thetaError < 0 && (thetaError > -Math.PI))
+                    isCounterClockwise = false;
+
+                rot_power = (isCounterClockwise ? -1 : 1) * rotationController.getOutput(Math.abs(thetaError), 0);
+            } else {
+                rotationControllerTimeoutStart = System.currentTimeMillis();
+            }
+
             double rawPower = Math.sqrt(Math.pow(joystick_x, 2) + Math.pow(joystick_y, 2));
 
             switch (mode)
@@ -61,10 +112,10 @@ public class Drive {
                     break;
             }
 
-            gyro_angles = manager.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.RADIANS);
-            theta = gyro_angles.firstAngle - manager.IMUReset - manager.offset;
-
-            theta *= manager.thetaReversed ? -1 : 1;
+            if (gamepad1.left_bumper) {
+                joystick_x = Math.round(joystick_x);
+                joystick_y = Math.round(joystick_y);
+            }
 
             orientation = (Math.atan2(joystick_y, joystick_x) - Math.PI / 4) - theta;
 
@@ -78,10 +129,10 @@ public class Drive {
 
     public void move(double posinput, double neginput, double rotinput)
     {
-        manager.opMode.telemetry.addData("lf", -posinput - rotinput);
-        manager.opMode.telemetry.addData("rf", neginput - rotinput);
-        manager.opMode.telemetry.addData("lb", -neginput - rotinput);
-        manager.opMode.telemetry.addData("rb", posinput - rotinput);
+//        manager.opMode.telemetry.addData("lf", -posinput - rotinput);
+//        manager.opMode.telemetry.addData("rf", neginput - rotinput);
+//        manager.opMode.telemetry.addData("lb", -neginput - rotinput);
+//        manager.opMode.telemetry.addData("rb", posinput - rotinput);
         manager.getLeftFrontMotor().setPower((manager.linearSpeed * -posinput) - (manager.rotSpeed * rotinput));
         manager.getRightFrontMotor().setPower((manager.linearSpeed * neginput) - (manager.rotSpeed * rotinput));
         manager.getLeftBackMotor().setPower((manager.linearSpeed * -neginput) - (manager.rotSpeed * rotinput));

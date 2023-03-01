@@ -23,8 +23,12 @@ public abstract class MotionProfile {
         distance = Math.hypot(ac, cb);
     }
 
-    public double getOutput(double time)
-    {
-        return 0;
+    public abstract double getOutput(double time);
+
+    public abstract double getSplineOutput(double time, double t);
+
+    public void reset() {
+
     }
+
 }
