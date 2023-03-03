@@ -58,6 +58,10 @@ public class Pipeline {
     {
         NavigationEngine navigationEngine = new NavigationEngine(localization, manager);
 
+        t = 0;
+        time.reset();
+        navigationEngine.linearController.resetSum();
+        navigationEngine.rotationController.resetSum();
         for (PipelineStep step : steps)
         {
             if (manager.opMode.isStopRequested())
@@ -133,6 +137,7 @@ public class Pipeline {
                         runContinuousActions();
                     }
                     time.reset();
+                    navigationEngine.linearController.resetSum();
                     if (step.path.profile != null) {
                         step.path.profile.reset();
                     }

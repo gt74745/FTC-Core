@@ -73,10 +73,10 @@ public class NavigationEngine {
 
     public void navigateInALinearFashion(Position destination, MotionProfile profile)
     {
+        position = localization.getCurrentPosition();
         if (profile != null)
         {
-            Position pos = localization.currentPosition;
-            double posError = Math.sqrt(Math.pow(destination.y - pos.y, 2) + Math.pow(destination.x - pos.x, 2));
+            double posError = Math.sqrt(Math.pow(destination.y - position.y, 2) + Math.pow(destination.x - position.x, 2));
 
             if (posError > (profile.distance / 2))
             {
@@ -87,7 +87,6 @@ public class NavigationEngine {
                 error = posError;
         }
 
-        position = localization.getCurrentPosition();
 
         double thetaOutput = Math.abs(thetaError) >= hardware.tolerances.rotational ? rotationController.getOutput(Math.abs(thetaError), 0) : 0;
         double orientation = Math.atan2(destination.y - position.y, destination.x - position.x) - Math.PI / 4 - position.t;
@@ -112,6 +111,10 @@ public class NavigationEngine {
         lastError = error;
 
         if (hardware.debugMode) {
+            hardware.opMode.telemetry.addData("x", position.x);
+            hardware.opMode.telemetry.addData("y", position.y);
+            hardware.opMode.telemetry.addData("time", Pipeline.time.time());
+            hardware.opMode.telemetry.addData("i", linearController.errorSum * linearController.kI);
             hardware.opMode.telemetry.addData("error", error);
 			hardware.opMode.telemetry.addData("direction", orientation);
             hardware.opMode.telemetry.update();
