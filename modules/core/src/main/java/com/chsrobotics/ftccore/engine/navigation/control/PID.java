@@ -10,6 +10,7 @@ public class PID {
     private final double kD;
     public double errorSum;
     private double maxErrorSum;
+    public static boolean useErrorSumCap = true;
 
     public PID(PIDCoefficients coeffs)
     {
@@ -21,7 +22,9 @@ public class PID {
 
     public double getOutput(double error, double speed) {
         errorSum += error;
-        errorSum = Math.min(errorSum, maxErrorSum);
+        if (useErrorSumCap) {
+            errorSum = Math.min(errorSum, maxErrorSum);
+        }
         return (kP * error) + (kI * errorSum) - (kD * speed);
     }
 
